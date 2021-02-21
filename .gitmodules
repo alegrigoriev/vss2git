@@ -1,0 +1,3 @@
+[submodule "py-vss"]
+	path = py_vss
+	url = ../py-vss
