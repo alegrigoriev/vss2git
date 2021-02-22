@@ -36,6 +36,10 @@
     <Compile Include="vss_reader.py" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="vss-config.xsd" />
+    <Content Include="vss-default-config.xml" />
+  </ItemGroup>
+  <ItemGroup>
     <InterpreterReference Include="Global|PythonCore|3.9" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />

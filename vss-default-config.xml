@@ -1,0 +1,107 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Projects xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation=". vss-config.xsd">
+	<Default>
+		<!-- These are all default settings -->
+		<Vars>
+			<Trunk>trunk</Trunk>
+			<Branches>branches</Branches>
+			<UserBranches>users/branches;branches/users</UserBranches>
+			<Tags>tags</Tags>
+			<MapTrunkTo>main</MapTrunkTo>
+		</Vars>
+		<!--
+		Replace specification is applied to the path to replace
+		names not allowed for refs. The following characters,
+		though some of them legal in file names, are not allowed:
+		
+			Non-printable characters, space ' ', asterisk '*' , colon ':',
+			question mark '?', left bracket '[', backslash '\',
+			circumflex '^', tilde '~', and also '@{' sequence.
+		
+		Note that in XML, you don't need to escape a backslash,
+		but need to escape some other special characters
+		Replace specifications are applied in order of their appearance.
+		
+		Note that file pathnames are not affected by the
+		ref replacement.
+		
+		You may need custom replacement specifications
+		if default replacements create ambiguity (duplicating names).
+		-->
+		<!--<Replace>
+			<Chars>path with spaces</Chars>
+			<With>path_without_spaces</With>
+		</Replace>-->
+		<Replace>
+			<!--
+			This will replace spaces in the ref names
+			with underscores
+			-->
+			<Chars> </Chars>
+			<With>_</With>
+		</Replace>
+		<Replace>
+			<Chars>:</Chars>
+			<With>.</With>
+		</Replace>
+		<Replace>
+			<Chars>^</Chars>
+			<With>+</With>
+		</Replace>
+	</Default>
+	<Project Name="*" Path="*">
+		<!--
+		The default mappings are applied after non-default, for the given path.
+		The default replacements are applied after non-default, for the given path.
+		-->
+		<!-- These are default mappings.
+		An asterisk matches any path component (a string without path separator '/')
+		A double asterisk matches any number of path components -
+		any string with any number of path separators.
+		$n are replacement strings, for the corresponding wildcards.
+		-->
+		<MapPath>
+			<!--
+			The branches mapping will map user branches properly:
+			"Project/branches/users/username/<branch>" will map to ref:
+			"refs/heads/Project/users/username/<branch>"
+			"Project/users/branches/username/path" will map to ref:
+			"refs/heads/Project/users/username/path"
+
+			For this mapping to work, it should go before map for the regular branches
+
+			Note that ** wildcard match is captured with the trailing slash,
+			thus it doesn't need a slash after the replacement variable
+			-->
+			<Path>**/$UserBranches/*/*</Path>
+			<Refname>refs/heads/$1users/$2/$3</Refname>
+			<!--<RevisionRef>refs/revisions/$1/users/$2/$3</RevisionRef>-->
+		</MapPath>
+		<MapPath>
+			<!--
+			The branches mapping will map branch names with a single path component:
+			"Project/branches/<branch>" will map to ref:
+			"refs/heads/Project/<branch>"
+			-->
+			<Path>**/$Branches/*</Path>
+			<Refname>refs/heads/$1/$2</Refname>
+		</MapPath>
+		<MapPath>
+			<!--
+			The tags mapping will map tag names with a single path component:
+			"Project/tags/<tag>" will map to ref:
+			"refs/tags/Project/<tag>"
+			-->
+			<Path>**/$Tags/*</Path>
+			<Refname>refs/tags/$1/$2</Refname>
+		</MapPath>
+		<MapPath>
+			<Path>**/$Trunk</Path>
+			<Refname>refs/heads/$1$MapTrunkTo</Refname>
+			<!--
+			$RevisionRef/r<n> ref will be created when a revision results in a commit.
+			<RevisionRef>refs/revisions/$1$MapTrunkTo</RevisionRef>
+			-->
+		</MapPath>
+	</Project>
+</Projects>
