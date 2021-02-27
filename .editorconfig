@@ -1,0 +1,27 @@
+# Rules in this file were initially inferred by Visual Studio IntelliCode from the C:\Users\agrigoriev\git\svn-to-git codebase based on best match to current usage at 2/27/2021
+# You can modify the rules from these initially generated values to suit your own policies
+# You can learn more about editorconfig here: https://docs.microsoft.com/en-us/visualstudio/ide/editorconfig-code-style-settings-reference
+root = true
+
+[**]
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.md]
+charset = utf-8
+
+[*.sh]
+end_of_line = lf
+
+[*.py]
+indent_style = tab
+tab_width = 4
+
+[*.{c,h}]
+end_of_line = lf
+
+[*.pyproj]
+# The project save trims the final newline
+insert_final_newline = false
+indent_style = space
+indent_size = 2
