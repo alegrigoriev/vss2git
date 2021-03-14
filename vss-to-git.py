@@ -52,6 +52,7 @@ def main():
 					help="Create refs under refs/revisions for each revision on each branch",
 					action='store_true')
 	parser.add_argument("--authors-map", '-A', dest='authors_map', help="JSON file to map Visual SourceSafe usernames to Git names and emails")
+	parser.add_argument("--make-authors-map", dest='make_authors', help="Create a JSON template for users file, to be used as --users-map file")
 
 	options = parser.parse_args();
 
@@ -83,6 +84,10 @@ def main():
 		project_tree.load(vss_database_reader(options.in_database, options.encoding))
 
 		project_tree.print_unmapped_directories(log_file)
+		project_tree.print_unmapped_authors(log_file)
+
+		if options.make_authors:
+			project_tree.make_authors_file(options.make_authors)
 
 	finally:
 		print_vss_stats(log_file)
