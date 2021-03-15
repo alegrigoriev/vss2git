@@ -117,7 +117,7 @@ class vss_database_reader:
 		self.database = vss_database(database_directory)
 		return
 
-	def read_revisions(self):
+	def read_revisions(self, options):
 		revision = None
 		rev = 1
 

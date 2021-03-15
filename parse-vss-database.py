@@ -18,14 +18,27 @@ if sys.version_info < (3, 9):
 	sys.exit("parse-vss-database: This package requires Python 3.9+")
 
 def main():
-	in_database = sys.argv[1]
+	import argparse
+	parser = argparse.ArgumentParser(description="Convert Microsoft Visual SourceSafe (VSS) database to Git repo(s)", allow_abbrev=False)
+	parser.add_argument('--version', action='version', version='%(prog)s 0.1')
+	parser.add_argument(dest='in_database', help="VSS database root directory")
+	parser.add_argument("--log", dest='log_file', help="Logfile destination; default to stdout")
+
+	options = parser.parse_args();
+
+	if options.log_file:
+		options.log_file = open(options.log_file, 'wt', 0x100000, encoding='utf=8')
+	else:
+		options.log_file = sys.stdout
+	log_file = options.log_file
 
 	from vss_reader import vss_database_reader, print_stats as print_vss_stats
 	from history_reader import load_history
 	try:
-		load_history(vss_database_reader(in_database), sys.stdout)
+		load_history(vss_database_reader(options.in_database), options)
 	finally:
-		print_vss_stats(sys.stdout)
+		print_vss_stats(log_file)
+		log_file.close()
 
 	return 0
 
