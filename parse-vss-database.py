@@ -51,11 +51,12 @@ def main():
 	options.log_revs = 'revs' in options.verbose or 'all' in options.verbose
 
 	from vss_reader import vss_database_reader, print_stats as print_vss_stats
-	from history_reader import history_reader
-	history = history_reader(options)
+	from project_tree import project_history_tree
+
+	project_tree = project_history_tree(options)
 
 	try:
-		history.load(vss_database_reader(options.in_database, options.encoding))
+		project_tree.load(vss_database_reader(options.in_database, options.encoding))
 	finally:
 		print_vss_stats(log_file)
 		log_file.close()
