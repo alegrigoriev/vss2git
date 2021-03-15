@@ -48,9 +48,11 @@ def main():
 	options.log_dump = 'dump' in options.verbose
 
 	from vss_reader import vss_database_reader, print_stats as print_vss_stats
-	from history_reader import load_history
+	from history_reader import history_reader
+	history = history_reader(options)
+
 	try:
-		load_history(vss_database_reader(options.in_database, options.encoding), options)
+		history.load(vss_database_reader(options.in_database, options.encoding))
 	finally:
 		print_vss_stats(log_file)
 		log_file.close()
