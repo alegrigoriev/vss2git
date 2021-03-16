@@ -23,6 +23,8 @@ def main():
 	parser.add_argument('--version', action='version', version='%(prog)s 0.1')
 	parser.add_argument(dest='in_database', help="VSS database root directory")
 	parser.add_argument("--log", dest='log_file', help="Logfile destination; default to stdout")
+	parser.add_argument("--verbose", "-v", dest='verbose', help="Log verbosity:", choices=['dump'],
+						action='append', nargs='?', const='dump', default=[])
 
 	options = parser.parse_args();
 
@@ -31,6 +33,13 @@ def main():
 	else:
 		options.log_file = sys.stdout
 	log_file = options.log_file
+
+	# If -v specified without value, the const list value is assigned as a list item. Extract it to be the part of list instead
+	if options.verbose and type(options.verbose[0]) is list:
+		o = options.verbose.pop(0)
+		options.verbose += o
+
+	options.log_dump = 'dump' in options.verbose
 
 	from vss_reader import vss_database_reader, print_stats as print_vss_stats
 	from history_reader import load_history
