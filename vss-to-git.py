@@ -77,6 +77,9 @@ def main():
 
 	try:
 		project_tree.load(vss_database_reader(options.in_database, options.encoding))
+
+		project_tree.print_unmapped_directories(log_file)
+
 	finally:
 		print_vss_stats(log_file)
 		project_tree_stats(log_file)

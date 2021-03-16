@@ -393,6 +393,10 @@ then an implicit `<UnmapPath>` rule is created for the parent directory.
 If you don't want to implicitly unmap the parent directory,
 add `BlockParent="No"` attribute to `<UnmapPath>`.
 
+Some directories may not match any of the `<MapPath>` directive,
+and thus remain not mapped to any branch.
+The program prints list of these directories to the log file.
+
 VSS label mapping{#VSS-label-mapping}
 -----------------
 
