@@ -60,11 +60,15 @@ def main():
 	return 0
 
 from py_vss.VSS.vss_exception import VssException
+from exceptions import Exception_history_parse
 if __name__ == "__main__":
 	try:
 		sys.exit(main())
 	except VssException as ex:
 		print("ERROR: %s" % str(ex), file=sys.stderr)
+		sys.exit(128)
+	except Exception_history_parse as ex:
+		print("ERROR: %s" % ex.strerror, file=sys.stderr)
 		sys.exit(128)
 	except KeyboardInterrupt:
 		# silent abort
