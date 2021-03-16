@@ -24,7 +24,7 @@ def main():
 	parser.add_argument(dest='in_database', help="VSS database root directory")
 	parser.add_argument("--log", dest='log_file', help="Logfile destination; default to stdout")
 	parser.add_argument("--encoding", help="Database code page for 8-bit text; default to 'mbcs'", default='mbcs')
-	parser.add_argument("--verbose", "-v", dest='verbose', help="Log verbosity:", choices=['dump'],
+	parser.add_argument("--verbose", "-v", dest='verbose', help="Log verbosity:", choices=['dump', 'revs', 'all'],
 						action='append', nargs='?', const='dump', default=[])
 	parser.add_argument("--end-revision", "-e", metavar='REV', dest='end_revision', help="Revision to stop the input file processing")
 	group = parser.add_argument_group()
@@ -45,7 +45,8 @@ def main():
 		o = options.verbose.pop(0)
 		options.verbose += o
 
-	options.log_dump = 'dump' in options.verbose
+	options.log_dump = 'dump' in options.verbose or 'all' in options.verbose
+	options.log_revs = 'revs' in options.verbose or 'all' in options.verbose
 
 	from vss_reader import vss_database_reader, print_stats as print_vss_stats
 	from history_reader import history_reader
