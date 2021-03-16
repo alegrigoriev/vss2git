@@ -56,7 +56,7 @@ The default is **main**. This value is also assigned to **$MapTrunkTo** variable
 `--no-default-config`
 - don't use default mappings for branches. This option doesn't affect default variable assignments.
 
-`--verbose={dump|revs|all|dump_all}`
+`--verbose={dump|revs|commits|all|dump_all}`
 - dump additional information to the log file:
 
 	`--verbose=dump`
@@ -71,8 +71,11 @@ This doesn't include file diffs.
 Such empty revisions can be issued if they only contain label operation.
 By default, `--verbose=dump` and `--verbose=all` don't dump empty revisions.
 
+	`--verbose=commits`
+	- issue `git show --raw --parents --no-decorate --abbrev-commit` for each commit made during VSS to Git conversion.
+
 	`--verbose=all`
-	- is same as `--verbose=dump --verbose=revs`
+	- is same as `--verbose=dump --verbose=revs --verbose=commits`
 
 `--path-filter <path filter glob>`
 - selects project paths to filter for. This option can appear multiple times. See [Path filtering](#path-filtering).
