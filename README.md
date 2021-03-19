@@ -596,7 +596,9 @@ In VSS, a directory used as a branch can be deleted, terminating its history.
 The directory can be later re-created again.
 
 **vss-to-git** program handles these cases by deleting and re-starting a branch when its VSS directory is deleted and re-created.
-The point where a branch got deleted is assigned a ref with `_deleted@r<rev>` suffix.
+The point where a branch got deleted is assigned a ref with `_deleted@r<rev>` suffix,
+but only if that point haven't been merged into another branch.
+If it's been merged, no special ref is assigned to it.
 
 Automatic deletion of merged branches
 -------------------------------------
