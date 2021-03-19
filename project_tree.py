@@ -188,6 +188,9 @@ class project_branch_rev:
 			obj2 = t[1]
 			obj1 = t[2]
 
+			if self.branch.ignore_file(path):
+				continue
+
 			if obj1 is None:
 				# added items
 				if obj2.is_dir():
@@ -564,6 +567,10 @@ class project_branch_rev:
 
 		difflist = []
 		for t in old_tree.compare(new_tree, "", expand_dir_contents=True):
+			path = t[0]
+
+			if branch.ignore_file(path):
+				continue
 
 			difflist.append(t)
 			continue
@@ -851,8 +858,10 @@ class project_branch:
 		self.set_rev_info(rev_info.rev, rev_info)
 		return rev_info
 
-	def apply_label(self, label):
+	def apply_label(self, label, path=None):
 		# Map the branch and label name to a tag
+		if path and self.ignore_file(path):
+			return
 		if self.label_root:
 			self.stage.add_label(self.label_root + label)
 		return
@@ -979,6 +988,9 @@ class project_branch:
 
 		return 0o100644
 
+	def ignore_file(self, path):
+		return self.cfg.ignore_files.match(path)
+
 	def hash_object(self, data, path, git_env):
 		# git_repo.hash_object will use the current environment from rev_info,
 		# to use the proper .gitattributes worktree
@@ -988,6 +1000,9 @@ class project_branch:
 		proj_tree = self.proj_tree
 		# Cut off the branch path to make relative paths
 		path = node_path.removeprefix(self.path)
+
+		if self.ignore_file(path):
+			return obj
 
 		# gitattributes paths are relative to the branch root.
 		# Find git attributes - TODO fill cfg.gitattributes
@@ -1386,6 +1401,7 @@ class project_history_tree(history_reader):
 		if branch is None:
 			return obj
 
+		# New object has just been created
 		return branch.preprocess_blob_object(obj, node.path)
 
 	def copy_blob(self, src_obj, node):
@@ -1495,7 +1511,7 @@ class project_history_tree(history_reader):
 				print('WARNING: Label operation refers to a %s "%s" under the branch directory "%s"'
 					% ("subdirectory" if node.kind == b'dir' else "file", path, branch.path),
 					file=self.log_file)
-				branch.apply_label(node.label)
+				branch.apply_label(node.label, path)
 				self.set_branch_changed(branch)
 				branch_found = True
 				break

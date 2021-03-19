@@ -697,6 +697,32 @@ for EOL conversion and optionally encoding conversion (`working-tree-encoding` a
 
 WARNING: Git may leave lone CR (carriage return) characters as is during the conversion.
 
+Ignoring files from VSS tree
+----------------------------
+
+Quite often, when a repository haven't been properly setup to ignore temporary files and build artifacts,
+those files get committed by mistake. During VSS to Git conversion,
+the program can ignore those files and drop them from the resulting Git commits.
+
+To ignore files, use `<IgnoreFiles>` directive in `<Default>` or `<Project>` section:
+
+```xml
+	<Project>
+		<IgnoreFiles>glob pattern....</IgnoreFiles>
+	</Project>
+```
+
+The directive contains a semicolon-separated list of pathname patterns to ignore.
+Multiple `<IgnoreFiles>` directives can be present.
+
+If a pattern is prefixed with an exclamation mark '`!`',
+it means this pattern is excluded from ignore (negative match).
+
+All `<IgnoreFiles>` definitions from `<Default>` are processed *after* all sections in `<Project>`.
+
+The program matches relative paths (in the branch worktree) against each in sequence, until a match is found.
+If it's a negative match (the pattern is prefixed with '`!`'), the file is not ignored.
+
 Performance optimizations
 --------------------------
 

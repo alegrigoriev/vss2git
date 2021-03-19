@@ -116,6 +116,7 @@
 				</xs:element>
 				<xs:element ref="MapRef" />
 				<xs:element ref="EditMsg" />
+				<xs:element name="IgnoreFiles" type="xs:string" />
 				<xs:element ref="InjectFile" />
 				<xs:element name="LabelRefRoot" maxOccurs="1" type="xs:string" />
 			</xs:choice>
