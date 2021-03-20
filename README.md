@@ -96,13 +96,19 @@ See [VSS label mapping](#VSS-label-mapping).
 
 `--decorate-commit-message <tagline type>`
 - tells the program to add a tagline to each commit message, depending on `<tagline type>`.
-At this time, the only `<tagline type>` supported is `revision-id`,
-which tells the program to add `VSS-revision: <rev>` taglines with VSS revision number to each commit.
+By default, the commit messages are undecorated.
+
+	`--decorate-commit-message revision-id`
+	- add `VSS-revision: <rev>` taglines with VSS revision number to each commit.
 This is useful when debugging the conversion configuration, though less so in the
 resulting repository.
 
-By default, the commit messages are undecorated. Note that if the original commit message was empty,
-the `VSS-revision` tagline will always be added in its place.
+	`--decorate-commit-message change-id`
+	- enable insertion of Gerrit `Change-Id:` taglines into commit messages.
+Use this option if you intend to import the generated Git repository into Gerrit code review system.
+Change ID for a commit is generated as SHA1 hash over combination of its parent commit IDs,
+author name, email and timestamp, and the commit message.
+Multiple runs of the program produce identical change IDs.
 
 `--create-revision-refs`
 - generate a ref (symbolic reference) for each commit, using a default mapping.
