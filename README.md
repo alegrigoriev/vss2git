@@ -1046,6 +1046,39 @@ only `Refs` attributes from active `<Project>` sections are used for ref pruning
 If `Refs` attribute is not present in `<Project>` section, it's assumed equal to '`*`',
 which means it covers `refs/heads/*`, `refs/tags/*`, `refs/revisions/*`.
 
+Reformatting indents in files
+-------------------------------
+
+**format_files.py** script allows to reformat indents in an existing C file and/or
+convert spaces to tabs and vice versa.
+
+The script can be invoked as:
+
+```
+python format_files.py <input file>... [-O <output file>] [options]
+```
+If `-O <output file>` option is not present, the data is written to standard output.
+
+The following options are supported:
+
+`--output <filename>` (or `-O <filename>`)
+- specifies output file name. If the option is not present, the data is written to standard output.
+
+`--style tabs|spaces`
+- specifies use of tabs or spaces for indentation.
+
+`--tab-size <tab size>`
+- specifies number of character positions per tab character, 1 to 16.
+
+`--indent-size <indent size>`
+- specifies number of positions per one indentation level.
+
+`--current-dir <current directory>` (or `-C <current directory>`)
+- base directory for glob specifications.
+
+`--trim-whitespace`
+- trim trailing whitespace.
+
 Performance optimizations
 --------------------------
 
