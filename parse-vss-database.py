@@ -31,6 +31,7 @@ def main():
 	group.add_argument("--quiet", '-q', help="Suppress progress indication", action='store_true')
 	group.add_argument("--progress", nargs='?', help="Forces progress indication when not detected as on terminal, and optionally sets the update period in seconds",
 					type=float, action='store', const='1.', default='1.' if sys.stderr.isatty() else None)
+	parser.add_argument("--config", "-c", help="XML file to configure conversion to Git repository")
 
 	options = parser.parse_args();
 
@@ -64,14 +65,20 @@ def main():
 	return 0
 
 from py_vss.VSS.vss_exception import VssException
-from exceptions import Exception_history_parse
+from exceptions import Exception_history_parse, Exception_cfg_parse
 if __name__ == "__main__":
 	try:
 		sys.exit(main())
+	except FileNotFoundError as fnf:
+		print("ERROR: %s: %s" % (fnf.strerror, fnf.filename), file=sys.stderr)
+		sys.exit(1)
 	except VssException as ex:
 		print("ERROR: %s" % str(ex), file=sys.stderr)
 		sys.exit(128)
 	except Exception_history_parse as ex:
+		print("ERROR: %s" % ex.strerror, file=sys.stderr)
+		sys.exit(128)
+	except Exception_cfg_parse as ex:
 		print("ERROR: %s" % ex.strerror, file=sys.stderr)
 		sys.exit(128)
 	except KeyboardInterrupt:
