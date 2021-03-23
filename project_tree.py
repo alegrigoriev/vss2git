@@ -1021,6 +1021,10 @@ class project_branch:
 		if obj.is_dir():
 			return 0o40000
 
+		for (match_list, mode) in self.cfg.chmod_specifications:
+			if match_list.match(path):
+				return 0o100000|mode
+
 		return 0o100644
 
 	def ignore_file(self, path):
