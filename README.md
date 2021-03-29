@@ -36,6 +36,25 @@ and optionally set the update period in seconds as a floating point number.
 For example, `--progress=0.1` sets the progress update period 100 ms.
 The default update period is 1 second.
 
+`--trunk <trunk directory name>`
+- use this directory name as the trunk branch. The default is **trunk**.
+This value is also assigned to **$Trunk** variable to use for substitutions in the XML config file.
+
+`--branches <branches directory name>`
+- use this directory name as the root directory for branches. The default is **branches**.
+This value is also assigned to **$Branches** variable to use for substitutions in the XML config file.
+
+`--user-branches <user branches directory name>`
+- use this directory name as the root directory for branches. The default is **users/branches,branches/users**.
+This value is also assigned to **$UserBranches** variable to use for substitutions in the XML config file.
+
+`--map-trunk-to <main branch name in Git>`
+- the main branch name in Git. The trunk directory will be mapped to this branch name.
+The default is **main**. This value is also assigned to **$MapTrunkTo** variable to use for substitutions in the XML config file.
+
+`--no-default-config`
+- don't use default mappings for branches. This option doesn't affect default variable assignments.
+
 `--verbose={dump|revs|all|dump_all}`
 - dump additional information to the log file:
 
@@ -133,7 +152,8 @@ The following default variables are preset:
 		</Vars>
 ```
 
-They can be overridden explicitly in `<Default>` and `<Project>` sections.
+They can be overridden explicitly in `<Default>` and `<Project>` sections,
+and/or by the command line options `--trunk`, `--branches`, `--user-branches`, `--map-trunk-to`.
 
 For the variable substitution purposes, the sections are processed in order,
 except for the specifications injected from `<Default>` section into `<Project>`.
@@ -231,7 +251,7 @@ this default mapping support both single- and multiple-projects repository struc
 With single project structure, `trunk` and `branches` directories are at the root directory level of a VSS repository,
 and they are mapped to `$MapTrunkTo`, branches and tags at the corresponding `refs` directory. 
 
-With multiple projects repository, `trunk` and `branches` directories at the subdirectories are mapped to corresponding refs under same subdirectories in `refs/heads` and `refs/tags`.
+With multiple projects repository, `trunk` and `branches` directories at the subdirectories are mapped to corresponding refs under same subdirectories in `refs/heads`.
 For example, `Proj1/trunk` will be mapped to `refs/heads/Proj1/$MapTrunkTo`, which then gets substituted as `refs/heads/Proj1/main`.
 
 Non-default mapping allows to handle more complex cases.
@@ -270,7 +290,7 @@ the program tries to map its path into a symbolic reference AKA ref ("branch").
 
 `<MapPath>` definitions are processed in their order in the config file in each `<Project>`.
 First `<Project>` definitions are processed, then definitions from `<Default>`,
-and then default mappings described above.
+and then default mappings described above (unless they are suppressed by `--no-default-config` command line option).
 
 The first `<MapPath>` with `<Path>` matching the beginning of the directory path will define which Git "branch" this directory belongs to.
 The rest of the path will be a subdirectory in the branch worktree.

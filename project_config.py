@@ -878,14 +878,19 @@ class project_config:
 		return merged
 
 	@staticmethod
-	def make_default_config():
-		default_cfg = """<Default>
-	<Vars>
-		<Trunk>trunk</Trunk>
-		<Branches>branches</Branches>
-		<UserBranches>users/branches;branches/users</UserBranches>
-		<MapTrunkTo>master</MapTrunkTo>
-	</Vars>
+	def make_default_config(options=None):
+		vars_section = '''
+		<Trunk>%s</Trunk>
+		<Branches>%s</Branches>
+		<MapTrunkTo>%s</MapTrunkTo>''' % (
+				getattr(options, 'trunk', 'trunk'),
+				getattr(options, 'branches', 'branches'),
+				getattr(options, 'map_trunk_to', 'main'))
+
+		user_branches = ';'.join(getattr(options, 'user_branches', ['users/branches', 'branches/users']))
+		if user_branches:
+			vars_section += '\n\t\t<UserBranches>%s</UserBranches>' % user_branches
+			user_branch_mappings = '''
 	<MapPath>
 		<Path>**/$UserBranches/*/*</Path>
 		<Refname>refs/heads/**/users/*/*</Refname>
@@ -893,7 +898,12 @@ class project_config:
 	<MapPath>
 		<Path>**/$UserBranches/*</Path>
 		<Refname />
-	</MapPath>
+	</MapPath>'''
+		else:
+			user_branch_mappings = ''
+
+		if getattr(options, 'use_default_config', True):
+			default_mappings = user_branch_mappings + '''
 	<MapPath>
 		<Path>**/$Branches/*</Path>
 		<Refname>refs/heads/**/*</Refname>
@@ -901,7 +911,13 @@ class project_config:
 	<MapPath>
 		<Path>**/$Trunk</Path>
 		<Refname>refs/heads/**/$MapTrunkTo</Refname>
-	</MapPath>
+	</MapPath>'''
+		else:
+			default_mappings = ''
+
+		default_cfg = """<Default>
+	<Vars>%s
+	</Vars>%s
 	<Replace>
 		<Chars> </Chars>
 		<With>_</With>
@@ -914,7 +930,7 @@ class project_config:
 		<Chars>^</Chars>
 		<With>+</With>
 	</Replace>
-</Default>"""
+</Default>""" % (vars_section, default_mappings)
 		return default_cfg
 
 	@staticmethod
