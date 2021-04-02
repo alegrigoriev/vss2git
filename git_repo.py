@@ -3,6 +3,7 @@ import sys
 import subprocess
 from pathlib import Path
 import concurrent.futures
+from inspect import isgenerator
 
 ### GIT: controls operations in Git repo
 class GIT:
@@ -37,7 +38,11 @@ class GIT:
 					stdin=subprocess.PIPE, stdout=subprocess.PIPE, cwd=self.get_cwd(env), env=env)
 		if not p:
 			return None
-		p.stdin.write(data)
+		if isgenerator(data):
+			for data in data:
+				p.stdin.write(data)
+		else:
+			p.stdin.write(data)
 		p.stdin.close()
 		sha1 = p.stdout.readline().decode().rstrip('\n')
 
