@@ -53,6 +53,13 @@ def get_directory_mapped_status(tree, unmapped_dir_list, prefix='/'):
 
 	return has_mapped_subdirs
 
+def path_in_dirs(dirs, path):
+	for directory in dirs:
+		if path.startswith(directory):
+			return True
+	return False
+# branch_changed set to True if there is a meaningful change in the tree (outside of merged directories)
+
 class author_props:
 	def __init__(self, author, email):
 		self.author = author
@@ -226,6 +233,8 @@ class project_branch_rev:
 			obj2 = t[1]
 			obj1 = t[2]
 
+			if path_in_dirs(self.branch.ignore_dirs, path):
+				continue
 			if self.branch.ignore_file(path):
 				continue
 
@@ -614,6 +623,9 @@ class project_branch_rev:
 		for t in old_tree.compare(new_tree, path_prefix, expand_dir_contents=True):
 			path = t[0]
 
+			if path_in_dirs(branch.ignore_dirs, path):
+				continue
+
 			obj2 = t[2]
 			item2 = t[4]
 			if branch.ignore_file(path):
@@ -843,7 +855,7 @@ class project_branch_rev:
 ## project_branch - keeps a context for a single change branch (or tag) of a project
 class project_branch:
 
-	def __init__(self, proj_tree:project_history_tree, branch_map, workdir:Path):
+	def __init__(self, proj_tree:project_history_tree, branch_map, workdir:Path, parent_branch):
 		self.path = branch_map.path
 		self.proj_tree = proj_tree
 		# Matching project's config
@@ -851,6 +863,15 @@ class project_branch:
 		self.git_repo = proj_tree.git_repo
 
 		self.delete_if_merged = branch_map.delete_if_merged
+
+		# ignore_dirs are paths of non-merging child branch dirs, with trailing slash
+		# files in those directories are ignored in the change list
+		self.ignore_dirs = []
+		self.parent = parent_branch
+		if parent_branch:
+			relative_path = branch_map.path.removeprefix(parent_branch.path)
+			# Add ignore specifications.
+			parent_branch.ignore_dirs.append(relative_path)
 
 		self.revisions = []
 		self.first_revision = None
@@ -1588,7 +1609,7 @@ class project_history_tree(history_reader):
 
 	## Adds a new branch for path in this revision, possibly with source revision
 	# The function must not be called when a branch already exists
-	def add_branch(self, branch_map):
+	def add_branch(self, branch_map, parent_branch=None):
 		print('Directory "%s" mapping with globspec "%s" in config "%s":'
 				% (branch_map.path, branch_map.globspec, branch_map.cfg.name),
 				file=self.log_file)
@@ -1599,11 +1620,15 @@ class project_history_tree(history_reader):
 		else:
 			git_workdir = None
 
-		branch = project_branch(self, branch_map, git_workdir)
+		branch = project_branch(self, branch_map, git_workdir, parent_branch)
+
 		if branch.refname:
 			print('    Added new branch %s' % (branch.refname), file=self.log_file)
 		else:
 			print('    Added new unnamed branch', file=self.log_file)
+
+		if parent_branch:
+			print('    Excluded from parent branch on path %s' % (parent_branch.path), file=self.log_file)
 
 		self.branches.set(branch_map.path, branch)
 		self.branches.set_mapped(branch_map.path, True)
@@ -1750,9 +1775,24 @@ class project_history_tree(history_reader):
 				if not branch_map:
 					continue
 
-				branch = self.find_branch(branch_map.path, match_full_path=True)
+				path = branch_map.path
+				branch = self.find_branch(path, match_full_path=True)
 				if not branch:
-					branch = self.add_branch(branch_map)
+					while True:
+						split_path = path.rpartition('/')
+						path = split_path[0]
+						if not path:
+							parent_branch = self.find_branch('/', match_full_path=True)
+							break
+						if not split_path[2]:
+							continue
+						# Find a parent branch. It should already be created,
+						# because the tree iterator returns the parent tree before its subtrees
+						parent_branch = self.find_branch(split_path[0], match_full_path=False)
+						if parent_branch is not None:
+							break
+						continue
+					branch = self.add_branch(branch_map, parent_branch)
 					if not branch:
 						continue
 
