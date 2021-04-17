@@ -74,8 +74,14 @@ By default, `--verbose=dump` and `--verbose=all` don't dump empty revisions.
 	`--verbose=commits`
 	- issue `git show --raw --parents --no-decorate --abbrev-commit` for each commit made during VSS to Git conversion.
 
+	`--verbose=format`
+	- log format specifications for all files subject to reformat.
+
+	`--verbose=format-verbose`
+	- log information about files explicitly excluded from formatting.
+
 	`--verbose=all`
-	- is same as `--verbose=dump --verbose=revs --verbose=commits`
+	- is same as `--verbose=dump --verbose=revs --verbose=commits --verbose=format`
 
 `--path-filter <path filter glob>`
 - selects project paths to filter for. This option can appear multiple times. See [Path filtering](#path-filtering).

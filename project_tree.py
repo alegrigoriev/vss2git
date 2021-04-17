@@ -1180,24 +1180,47 @@ class project_branch:
 		# path is relative to the branch root
 		for fmt in self.format_specifications:
 			# Format paths are relative to the branch root
-			if not fmt.paths.fullmatch(node_path):
+			match = fmt.paths.fullmatch(path)
+
+			if not match:
+				# fullmatch can return None and False
+				if match is False and proj_tree.log_formatting_verbose and fmt.style:
+					# This path is specifically excluded from this format specification
+					print("FORMATTING: file \"%s\": explicitly excluded from format %s in branch \"%s\""
+									% (path, fmt.format_str, self.path), file=log_file)
 				continue
 
 			if not fmt.style:
 				# This format specification is setup to exclude it from formatting
 				fmt = None
+				if proj_tree.log_formatting_verbose:
+					print("FORMATTING: file \"%s\": explicitly excluded from processing in branch \"%s\""
+									% (path, self.path), file=log_file)
+			elif proj_tree.log_formatting:
+				print("FORMATTING: file \"%s\" with format %s in branch \"%s\""
+									% (path, fmt.format_str, self.path), file=log_file)
 			break
 		else:
 			# No match in per-branch specifications
 			for fmt in self.cfg.format_specifications:
 				# node_path is relative to the root of the source repository
 				# Format paths are relative to the source root
-				if not fmt.paths.fullmatch(node_path):
+				match = fmt.paths.fullmatch(node_path)
+
+				if not match:
+					# fullmatch can return None and False
+					if match is False and proj_tree.log_formatting_verbose and fmt.style:
+						# This path is specifically excluded from this format specification
+						print("FORMATTING: file \"%s\": explicitly excluded from format %s" % (node_path, fmt.format_str), file=log_file)
 					continue
 
 				if not fmt.style:
 					# This format specification is setup to exclude it from formatting
 					fmt = None
+					if proj_tree.log_formatting_verbose:
+						print("FORMATTING: file \"%s\": explicitly excluded from processing" % (node_path), file=log_file)
+				elif proj_tree.log_formatting:
+					print("FORMATTING: file \"%s\" with format %s" % (node_path, fmt.format_str), file=log_file)
 				break
 			else:
 				fmt = None
@@ -1372,6 +1395,8 @@ class project_history_tree(history_reader):
 		self.options = options
 		self.log_file = options.log_file
 		self.log_commits = getattr(options, 'log_commits', False)
+		self.log_formatting_verbose = getattr(options, 'log_formatting_verbose', False)
+		self.log_formatting = self.log_formatting_verbose or getattr(options, 'log_formatting', False)
 
 		# This is a tree of branches
 		self.branches = path_tree()
