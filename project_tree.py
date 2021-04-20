@@ -1002,10 +1002,13 @@ class project_branch:
 
 	def preprocess_blob_object(self, obj, node_path):
 		proj_tree = self.proj_tree
+		log_file = proj_tree.log_file
 		# Cut off the branch path to make relative paths
 		path = node_path.removeprefix(self.path)
 
 		if self.ignore_file(path):
+			if proj_tree.options.log_dump:
+				print('IGNORED: File %s' % (node_path), file=log_file)
 			return obj
 
 		# gitattributes paths are relative to the branch root.
