@@ -569,7 +569,27 @@ class project_branch_rev:
 		for t in old_tree.compare(new_tree, "", expand_dir_contents=True):
 			path = t[0]
 
+			obj2 = t[2]
+			item2 = t[4]
 			if branch.ignore_file(path):
+				if not obj2:
+					continue
+				full_path = branch.path + path
+				ignored_path = getattr(obj2, 'ignored_path', None)
+				if ignored_path and (full_path == ignored_path or full_path.endswith('/' + ignored_path)):
+					continue
+				# Print the message only once for the given blob, when it's used with the same relative path
+				# or with the parent's relative path
+				if obj2.is_file():
+					parent_dir = full_path.removesuffix(item2.name)
+					if not parent_dir or not branch.ignore_file(parent_dir):
+						print('IGNORED: File %s' % (full_path,), file=self.log_file)
+				else:
+					parent_dir = path.removesuffix(item2.name + '/')
+					if not parent_dir or not branch.ignore_file(parent_dir):
+						print('IGNORED: Directory %s' % (full_path,), file=self.log_file)
+					# else The whole parent directory is ignored; don't print the message for every subdirectory
+				obj2.ignored_path = full_path
 				continue
 
 			difflist.append(t)
@@ -1007,8 +1027,9 @@ class project_branch:
 		path = node_path.removeprefix(self.path)
 
 		if self.ignore_file(path):
-			if proj_tree.options.log_dump:
+			if proj_tree.git_repo is None and proj_tree.options.log_dump:
 				print('IGNORED: File %s' % (node_path), file=log_file)
+				# With git repository, IGNORED files are printed during staging
 			return obj
 
 		# gitattributes paths are relative to the branch root.
