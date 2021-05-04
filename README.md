@@ -644,6 +644,29 @@ For example, to inject `.gitignore` to the root directory of a branch, specify `
 Optional `Branch` attribute filters which branches are subject to injection of this file.
 The attribute value is a glob specification to match the branch VSS directory path.
 
+`<AddFile>` adds or replaces a file at the specified VSS path and revision,
+equivalent to a file being added or modified in the VSS repository at the revision:
+
+```xml
+	<Project>
+		<!-- Use file data -->
+		<AddFile Path="<file path in VSS tree>"
+				File="<source file path>"
+				RevId="<add/replace at revision ID>" />
+		<!-- Use immediate data -->
+		<AddFile Path="<file path in VSS tree>"
+				Rev="<add/replace at revision>">File data
+</AddFile>
+	</Project>
+```
+
+A file injected at one revision can be overridden by another file injected at different revision.
+This directive can also override a file which was previously present in a repository.
+
+`Rev="revision"` specifies the revision number at which the file is to be added.
+`<RevId>revision ID</RevId>` specifies the revision string at which the file is to be added.
+Only one `<Rev>` or `<RevId>` specification can be present.
+
 If data is to be loaded from a file specified by `File="<source file path>"` attribute,
 it's committed as is (with possible conversion defined by implicit and explicit EOL conversion rules).
 Note that the source file path is relative to the directory of this XML configuration file.
