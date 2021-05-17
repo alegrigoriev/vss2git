@@ -587,6 +587,8 @@ only of its files.
 The program makes a new Git commit on a branch when there are changes in its mapped directory tree.
 The commit message, timestamps and author are taken from the VSS revision information.
 
+Single branch merges are fast-forwarded, when possible.
+
 Performance optimizations
 --------------------------
 
