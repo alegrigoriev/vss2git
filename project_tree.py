@@ -191,6 +191,13 @@ class project_branch_rev:
 			if self.branch.ignore_file(path):
 				continue
 
+			if obj1 is not None and obj1.is_hidden():
+				obj1 = None
+			if obj2 is not None and obj2.is_hidden():
+				obj2 = None
+			if obj1 is None and obj2 is None:
+				continue
+
 			if obj1 is None:
 				# added items
 				if obj2.is_dir():
@@ -627,6 +634,13 @@ class project_branch_rev:
 			obj2 = t[2]
 			item1 = t[3]
 			item2 = t[4]
+
+			if obj1 is not None and obj1.is_hidden():
+				obj1 = None
+			if obj2 is not None and obj2.is_hidden():
+				obj2 = None
+			if obj1 is None and obj2 is None:
+				continue
 
 			if obj2 is None:
 				# a path is deleted
@@ -1449,6 +1463,8 @@ class project_history_tree(history_reader):
 			for (path, obj) in base_tree.find_path(node.path):
 				if not obj.is_dir():
 					continue
+				if obj.is_hidden():
+					continue
 				# Check if we need and can create a branch for this directory
 				branch_map = self.get_branch_map(root_path + path)
 				if not branch_map:
@@ -1565,7 +1581,7 @@ class project_history_tree(history_reader):
 			return base_tree
 
 		# 'delete' action comes with no kind
-		if node.action == b'delete' or node.action == b'replace' or (node.action == b'rename' and node.path != node.copyfrom_path):
+		if node.action == b'delete' or node.action == b'hide' or node.action == b'replace' or (node.action == b'rename' and node.path != node.copyfrom_path):
 			delete_tree_node = self.branches.get_node(node.copyfrom_path if node.action == b'rename' else node.path, match_full_path=True)
 		else:
 			delete_tree_node = None
@@ -1608,7 +1624,7 @@ class project_history_tree(history_reader):
 
 	def apply_file_node(self, node, base_tree):
 		base_tree = super().apply_file_node(node, base_tree)
-		if node.action != b'delete':
+		if node.action != b'delete' and node.action != b'hide':
 			branch = self.find_branch(node.path)
 			if branch:
 				file = base_tree.find_path(node.path)
@@ -1627,6 +1643,16 @@ class project_history_tree(history_reader):
 			if rev_action.action == b'add':
 				if revision.tree.find_path(rev_action.path):
 					rev_action.action = b'change'
+			elif rev_action.action == b'delete':
+				# hide the file or directory
+				rev_action.action = b'hide'
+				src_node = revision.tree.find_path(rev_action.path)
+				if src_node is None:
+					raise Exception_history_parse('<DeletePath> operation refers to non-existing path "%s"' % rev_action.path)
+				if src_node.is_dir():
+					rev_action.kind = b'dir'
+				else:
+					rev_action.kind = b'file'
 
 			revision.tree = self.apply_node(rev_action, revision.tree)
 			continue
