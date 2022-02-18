@@ -15,7 +15,7 @@
 import sys
 
 if sys.version_info < (3, 9):
-	sys.exit("parse-vss-database: This package requires Python 3.9+")
+	sys.exit("vss-to-git: This package requires Python 3.9+")
 
 def main():
 	import argparse
@@ -44,6 +44,7 @@ def main():
 					help="Process only selected paths. The option value is Git-style globspec", action='append')
 	parser.add_argument("--project", dest='project_filter', default=[],
 					help="Process only selected projects. The option value is Git-style globspec", action='append')
+	parser.add_argument("--target-repository", dest='target_repo', help="Target Git repository to write the conversion result")
 
 	options = parser.parse_args();
 
@@ -64,7 +65,7 @@ def main():
 	options.log_revs = 'revs' in options.verbose or 'all' in options.verbose
 
 	from vss_reader import vss_database_reader, print_stats as print_vss_stats
-	from project_tree import project_history_tree
+	from project_tree import project_history_tree, print_stats as project_tree_stats
 
 	project_tree = project_history_tree(options)
 
@@ -72,6 +73,7 @@ def main():
 		project_tree.load(vss_database_reader(options.in_database, options.encoding))
 	finally:
 		print_vss_stats(log_file)
+		project_tree_stats(log_file)
 		log_file.close()
 
 	return 0
