@@ -658,6 +658,7 @@ class path_map:
 			self.revs_ref_sub = None
 
 		self.edit_msg_list = []
+		self.delete_if_merged = False
 
 		if block_upper_level:
 			# If the (expanded) path pattern has /* or /** specifications at the end,
@@ -728,6 +729,7 @@ class path_map:
 			globspec=self.path_match.globspec,
 			refname=refname,
 			edit_msg_list=self.edit_msg_list,
+			delete_if_merged=self.delete_if_merged,
 			labels_ref_root=labels_ref_root,
 			revisions_ref=revisions_ref)
 
@@ -869,6 +871,8 @@ class project_config:
 
 		for node in path_map_node.findall("./EditMsg"):
 			new_map.edit_msg_list.append(self.process_edit_msg_node(node))
+
+		new_map.delete_if_merged = bool_property_value(path_map_node, 'DeleteIfMerged')
 
 		self.map_set.add(new_map.key())
 		self.map_list.append(new_map)
