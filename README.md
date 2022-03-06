@@ -785,6 +785,39 @@ to which this specification applies.
 Only one `<Rev>` or `<RevId>` specification can be present.
 Only one `<FromRev>` or `<FromRevId>` specification can be present.
 
+Forcing a merge
+---------------
+
+Occasionally, you want to join two lines of history left disjointed in the repository.
+
+Use `<MergePath>` directive to create a connection from one repository path and revision to another path and revision.
+Note that this operation doesn't change the files, it just links the Git commits by a parent.
+
+`<MergePath>` directives can only be present in a `<Project>` section.
+If it's present  under `<Default>` section, it's ignored.
+
+```xml
+	<Project>
+		<MergePath>
+			<FromPath>source branch path</FromPath>
+			<FromRev>source revision</FromRev>
+			<FromRevId>source revision ID</FromRevId>
+			<Path>target branch path</Path>
+			<Rev>target revision</Rev>
+			<RevId>target revision ID</RevId>
+		</MergePath>
+	</Project>
+```
+
+`<RevId>revision ID</RevId>` and `<FromRevId>source revision ID</FromRevId>` specifies symbolic revision ID,
+to which this specification applies.
+Only one `<Rev>` or `<RevId>` specification can be present.
+Only one `<FromRev>` or `<FromRevId>` specification can be present.
+
+Source and target branch paths must refer to directories mapped to Git branches by `<MapPath>` directives.
+The directory must exist (created and not deleted) at the given revisions.
+This directive can also refer to directories created by previous `<CopyPath>` operation.
+
 Performance optimizations
 --------------------------
 
