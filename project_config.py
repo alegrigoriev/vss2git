@@ -894,6 +894,9 @@ class project_config:
 		for node in path_map_node.findall("./EditMsg"):
 			new_map.edit_msg_list.append(self.process_edit_msg_node(node))
 
+		for node in path_map_node.findall("./InjectFile"):
+			new_map.inject_files.append(self.process_injected_file(node))
+
 		new_map.delete_if_merged = bool_property_value(path_map_node, 'DeleteIfMerged')
 
 		self.map_set.add(new_map.key())
