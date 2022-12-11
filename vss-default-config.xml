@@ -204,7 +204,7 @@ Release/
 *~
 *.obj
 </InjectFile>
-		<!--<Formatting Indent="8" TabSize="8" IndentStyle="tabs" FormatComments="slashslash">
+		<!--<Formatting Indent="8" TabSize="8" IndentStyle="tabs" FormatComments="slashslash" ReindentContinuation="smart">
 			<Path>*.c;*.cpp;*.CPP;*.h;*.hpp</Path>
 		</Formatting>-->
 	</Project>
