@@ -126,6 +126,7 @@ class vss_database_reader:
 	def read_revisions(self, options):
 		revision = None
 		rev = 1
+		revision_merge_span = getattr(options, 'revision_merge_span', 60)
 
 		from py_vss.VSS.vss_changeset import vss_changeset_history
 		print("Loading Visual SourceSafe database...", end='',file=sys.stderr); sys.stderr.flush()
@@ -159,7 +160,7 @@ class vss_database_reader:
 						revision.nodes.append(node)
 					continue
 				# Check if we want to combine these two revisions
-				elif next_revision.timestamp <= revision.timestamp + 60:
+				elif next_revision.timestamp <= revision.timestamp + revision_merge_span:
 					revision.skip_commit = True
 
 				yield revision

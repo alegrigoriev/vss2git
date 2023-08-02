@@ -59,6 +59,7 @@ def main():
 	parser.add_argument("--authors-map", '-A', dest='authors_map', help="JSON file to map Visual SourceSafe usernames to Git names and emails")
 	parser.add_argument("--make-authors-map", dest='make_authors', help="Create a JSON template for users file, to be used as --users-map file")
 	parser.add_argument("--append-to-refs", action='append', default=[], metavar='refs/prev-repo-heads-and-tags', help="refs root of previous repository, see README")
+	parser.add_argument("--revision-merge-span", type=int, default=60, help="Maximum time span to merge revisions with same username and message into a single commit; see README")
 	parser.add_argument("--prune-refs", dest='prune_refs', help="Prune the selected ref namespaces. No value means 'heads/', 'tags/'.",
 					 action='append', nargs='?', const='')
 	parser.add_argument("--retab-only", default=False, action='store_true', help="Only convert existing indents to tabs or spaces.")
