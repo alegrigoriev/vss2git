@@ -46,6 +46,8 @@ def main():
 	parser.add_argument("--project", dest='project_filter', default=[],
 					help="Process only selected projects. The option value is Git-style globspec", action='append')
 	parser.add_argument("--target-repository", dest='target_repo', help="Target Git repository to write the conversion result")
+	parser.add_argument("--decorate-commit-message", help="Add taglines to the commit message:", choices=['revision-id'],
+						action='append', default=[])
 
 	options = parser.parse_args();
 
@@ -64,6 +66,8 @@ def main():
 	# dump_all is not included in --verbose=all
 	options.log_dump_all = 'dump_all' in options.verbose
 	options.log_revs = 'revs' in options.verbose or 'all' in options.verbose
+
+	options.decorate_revision_id = 'revision-id' in options.decorate_commit_message
 
 	from vss_reader import vss_database_reader, print_stats as print_vss_stats
 	from project_tree import project_history_tree, print_stats as project_tree_stats

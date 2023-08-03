@@ -91,6 +91,16 @@ Use this option to override a default.
 You can also use `<LabelRefRoot>` specification in the config file to set a per-branch ref root.
 See [VSS label mapping](#VSS-label-mapping).
 
+`--decorate-commit-message <tagline type>`
+- tells the program to add a tagline to each commit message, depending on `<tagline type>`.
+At this time, the only `<tagline type>` supported is `revision-id`,
+which tells the program to add `VSS-revision: <rev>` taglines with VSS revision number to each commit.
+This is useful when debugging the conversion configuration, though less so in the
+resulting repository.
+
+By default, the commit messages are undecorated. Note that if the original commit message was empty,
+the `VSS-revision` tagline will always be added in its place.
+
 XML configuration file{#xml-config-file}
 ======================
 
