@@ -44,6 +44,8 @@ class vss_changeset_revision:
 		self.datetime = change.get_datetime()
 		self.timestamp = change.get_timestamp()
 		self.rev_id = str(self.timestamp)
+		self.has_labels = False
+		self.has_changes = False
 		self.nodes = []
 
 		for action in change.get_actions():
@@ -54,6 +56,10 @@ class vss_changeset_revision:
 				data:bytes=None, copy_from=None, copy_from_rev=None, label=None):
 		if copy_from and copy_from_rev is None:
 			copy_from_rev = self.rev
+		if action == b'label':
+			self.has_labels = True
+		else:
+			self.has_changes = True
 
 		self.nodes.append(vss_revision_node(action, kind, path,
 					data=data, copy_from=copy_from, copy_from_rev=copy_from_rev, label=label))
@@ -135,6 +141,13 @@ class vss_database_reader:
 				if next_revision.author != revision.author \
 						or (next_revision.log and next_revision.log != revision.log):
 					# Cannot merge these revisions: author and/or log message doesn't match
+					pass
+				elif (revision.has_labels \
+						and next_revision.has_changes) \
+					or (next_revision.has_labels \
+						and revision.has_changes):
+					# Can't combine revisions if one contains label operations
+					# and another contains file changes
 					pass
 				elif next_revision.timestamp <= revision.timestamp + 2:
 					# If many files are getting committed at once,

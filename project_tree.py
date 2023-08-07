@@ -74,6 +74,7 @@ class project_branch_rev:
 			prev_rev.next_rev = self
 			self.tree:git_tree = prev_rev.tree
 		self.props_list = []
+		self.labels = None
 		return
 
 	def set_revision(self, revision):
@@ -126,6 +127,14 @@ class project_branch_rev:
 
 		props_list.insert(0,
 				revision_props(revision, log_to_paragraphs(log), author_info, date))
+		return
+
+	def add_label(self, label_ref):
+		if self.labels is None:
+			self.labels = [label_ref]
+		elif label_ref not in self.labels:
+			# If multiple files get same label, apply the label only once
+			self.labels.append(label_ref)
 		return
 
 	def get_difflist(self, old_tree, new_tree):
@@ -308,6 +317,11 @@ class project_branch:
 		self.set_rev_info(rev_info.rev, rev_info)
 		return rev_info
 
+	def apply_label(self, label):
+		# Map the branch and label name to a tag
+		self.stage.add_label('refs/tags/'+ label)
+		return
+
 	### The function makes a commit on this branch, using the properties from
 	# history_revision object to set the commit message, date and author
 	# If there is no changes, and this is a tag
@@ -372,6 +386,15 @@ class project_branch:
 			self.proj_tree.commits_made += 1
 		else:
 			rev_info.committed_git_tree = parent_git_tree
+
+		if rev_info.labels is not None:
+			for refname in rev_info.labels:
+				props = rev_info.props_list[0]
+				if props.log:
+					self.create_tag(refname, commit, props, log_file=rev_info.log_file.revision_ref)
+					continue
+				self.update_ref(refname, commit, log_file=rev_info.log_file.revision_ref)
+				continue
 
 		rev_info.commit = commit
 		return
@@ -802,6 +825,45 @@ class project_history_tree(history_reader):
 
 		return False
 
+	def apply_label_node(self, node):
+		path = node.path
+		branch_found = False
+		if node.kind == b'dir':
+			tree_node = self.branches.get_node(path, match_full_path=True)
+			if tree_node is not None:
+				# This is a tree node with the exact path. Read nodes recursively under it and apply the label
+				for subnode in tree_node:
+					branch = subnode.object
+					if branch is not None:
+						branch.apply_label(node.label)
+						self.set_branch_changed(branch)
+						branch_found = True
+					continue
+				if tree_node.object is not None:
+					return
+
+		# This gets a branch node with partial path.
+		if path.endswith('/'):
+			path = path.rstrip('/')
+		while path:
+			path_split = path.rpartition('/')
+			tree_node = self.branches.get_node(path_split[0], match_full_path=True)
+			if tree_node is not None and tree_node.object is not None:
+				branch = tree_node.object
+				path = node.path.removeprefix(branch.path)
+				print('WARNING: Label operation refers to a %s "%s" under the branch directory "%s"'
+					% ("subdirectory" if node.kind == b'dir' else "file", path, branch.path),
+					file=self.log_file)
+				branch.apply_label(node.label)
+				self.set_branch_changed(branch)
+				branch_found = True
+				break
+			path = path_split[0]
+		if not branch_found:
+			print('WARNING: Label operation refers to Path="%s" not mapped to any branch' % (node.path), file=self.log_file)
+
+		return
+
 	def apply_node(self, node, base_tree):
 
 		if not self.filter_path(node.path, node.kind, base_tree):
@@ -812,6 +874,10 @@ class project_history_tree(history_reader):
 		if node.copyfrom_path is not None and not self.filter_path(node.copyfrom_path, node.kind, base_tree) and node.text_content is None:
 			raise Exception_history_parse('Node Path="%s": Node-copyfrom-path "%s" refers to a filtered-out directory'
 						% (node.path, node.copyfrom_path))
+
+		if node.action == b'label':
+			self.apply_label_node(node)
+			return base_tree
 
 		base_tree = super().apply_node(node, base_tree)
 
