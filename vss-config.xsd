@@ -23,6 +23,7 @@
 					<xs:element minOccurs="1" maxOccurs="1" name="Path" type="xs:string" />
 					<xs:element minOccurs="1" maxOccurs="1" name="Refname" type="xs:string" />
 					<xs:element minOccurs="0" maxOccurs="1" name="RevisionRef" type="xs:string" />
+					<xs:element name="LabelRefRoot" maxOccurs="1" type="xs:string" />
 				</xs:choice>
 			</xs:sequence>
 			<xs:attribute name="BlockParent" type="Boolean" use="optional" />
@@ -63,6 +64,7 @@
 						</xs:simpleContent>
 					</xs:complexType>
 				</xs:element>
+				<xs:element name="LabelRefRoot" maxOccurs="1" type="xs:string" />
 			</xs:choice>
 		</xs:sequence>
 	</xs:group>

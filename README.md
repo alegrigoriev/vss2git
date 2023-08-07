@@ -85,6 +85,12 @@ By default, `--verbose=dump` and `--verbose=all` don't dump empty revisions.
 The repository should be previously initialized by a proper `git init` command.
 The program will not delete existing refs, only override them as needed.
 
+`--label-ref-root=<ref>`
+- specifies a namespace (default `refs/tags/`) for mapping VSS labels to tags or other refs.
+Use this option to override a default.
+You can also use `<LabelRefRoot>` specification in the config file to set a per-branch ref root.
+See [VSS label mapping](#VSS-label-mapping).
+
 XML configuration file{#xml-config-file}
 ======================
 
@@ -373,6 +379,49 @@ which means it matches all directories in its parent directory,
 then an implicit `<UnmapPath>` rule is created for the parent directory.
 If you don't want to implicitly unmap the parent directory,
 add `BlockParent="No"` attribute to `<UnmapPath>`.
+
+VSS label mapping{#VSS-label-mapping}
+-----------------
+
+VSS labels are mapped to refs by adding a ref root prefix to the label name.
+
+The default ref root for labels is `refs/tags/`, thus a label `My Project 1.0` becomes a tag ref
+`refs/tags/My_Project_1.0`,
+with spaces replaced by underscores because of `<Replace>` specification (see [Ref character substitution](#ref-character-substitution)).
+
+You can change the default ref root by including a `<LabelRefRoot>` specification
+in `<MapPath>` section, or in `<Default>` or `<Project>` section:
+
+```xml
+	<Project>
+		<LabelRefRoot>ref root string</LabelRefRoot>
+		<MapPath>
+			<Path>path matching specification</Path>
+			<Refname>ref substitution string</Refname>
+			<!-- optional: -->
+			<LabelRefRoot>ref root substitution</LabelRefRoot>
+		</MapPath>
+	</Project>
+```
+
+If `<LabelRefRoot>` specification is not present in `<MapPath>` section,
+the ref root specified by the one in `<Project>` section or the command line option value will be used.
+
+`<LabelRefRoot>` specification at `<Project>` level overrides the global value
+set by `--label-ref-root` command line option.
+
+Note that VSS allows to label a point in history of any directory (project) or a file.
+If a file is shared to multiple projects, this label applies to all copies.
+
+Even though Git support tagging any tree object and blob (file) object,
+these tags are not associated with a commit in a branch in history, and thus would be confusing.
+For this reason, the program always tags the whole branch,
+even if a label is applied just to a single file or a subdirectory.
+
+If a label is applied to a VSS directory with subdirectories mapped to different branches,
+each of those branches gets tagged. Use per-branch `<LabelRefRoot>` mapping to create different tags per branch.
+
+You can use `<MapRef>` specifications to further adjust the tag names generated from the labels.
 
 Path filtering{#path-filtering}
 --------------

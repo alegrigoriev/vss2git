@@ -261,6 +261,8 @@ class project_branch:
 
 		self.init_head_rev()
 
+		self.label_root = branch_map.labels_ref_root
+
 		return
 
 	def init_head_rev(self):
@@ -319,7 +321,8 @@ class project_branch:
 
 	def apply_label(self, label):
 		# Map the branch and label name to a tag
-		self.stage.add_label('refs/tags/'+ label)
+		if self.label_root:
+			self.stage.add_label(self.label_root + label)
 		return
 
 	### The function makes a commit on this branch, using the properties from
@@ -389,10 +392,11 @@ class project_branch:
 
 		if rev_info.labels is not None:
 			for refname in rev_info.labels:
-				props = rev_info.props_list[0]
-				if props.log:
-					self.create_tag(refname, commit, props, log_file=rev_info.log_file.revision_ref)
-					continue
+				if rev_info.props_list and refname.startswith('refs/tags/'):
+					props = rev_info.props_list[0]
+					if props.log:
+						self.create_tag(refname, commit, props, log_file=rev_info.log_file.revision_ref)
+						continue
 				self.update_ref(refname, commit, log_file=rev_info.log_file.revision_ref)
 				continue
 

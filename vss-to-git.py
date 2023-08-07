@@ -38,6 +38,7 @@ def main():
 					action='append', default=['users/branches', 'branches/users'])
 	parser.add_argument("--tags", help="Tags directory name, default 'tags'", default='tags')
 	parser.add_argument("--map-trunk-to", dest='map_trunk_to', help="Branch name for trunk in Git repository, default 'main'", default='main')
+	parser.add_argument("--label-ref-root", dest='label_ref_root', help="Namespace to map VSS labels to Git refs, default 'refs/tags/'", default='refs/tags/')
 	parser.add_argument("--no-default-config", dest='use_default_config', default=True, action='store_false',
 					help="Don't use default mappings (**/trunk, **/branches/*, **/tags/*). The mappings need to be provided in a config file, instead")
 	parser.add_argument("--path-filter", dest='path_filter', default=[],

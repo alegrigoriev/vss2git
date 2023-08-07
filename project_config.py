@@ -715,10 +715,16 @@ class path_map:
 		else:
 			revisions_ref = None
 
+		if self.labels_ref_map:
+			labels_ref_root = self.labels_ref_map.expand(m)
+		else:
+			labels_ref_root = None
+
 		return SimpleNamespace(
 			path=path,
 			globspec=self.path_match.globspec,
 			refname=refname,
+			labels_ref_root=labels_ref_root,
 			revisions_ref=revisions_ref)
 
 class project_config:
@@ -737,6 +743,7 @@ class project_config:
 		self.chars_repl_re = None
 		self.explicit_only = False
 		self.needs_configs = ""
+		self.label_ref_root = None
 		if xml_node:
 			self.load(xml_node)
 		return
@@ -757,6 +764,8 @@ class project_config:
 				self.add_vars_node(node)
 			elif tag == 'MapPath':
 				self.add_path_map_node(node)
+			elif tag == 'LabelRefRoot':
+				self.label_ref_root = node.text
 			elif tag == 'UnmapPath':
 				self.add_path_unmap_node(node)
 			elif tag == 'Replace':
@@ -850,6 +859,18 @@ class project_config:
 		self.map_set.add(new_map.key())
 		self.map_list.append(new_map)
 
+		node = path_map_node.find("./LabelRefRoot")
+
+		if node is not None and node.text:
+			labels_ref = node.text
+		else:
+			labels_ref = self.label_ref_root
+
+		if labels_ref:
+			new_map.labels_ref_map = glob_expand(labels_ref, self.replacement_vars, new_map.path_match)
+		else:
+			new_map.labels_ref_map = None
+
 		return
 
 	def add_path_unmap_node(self, path_unmap_node):
@@ -936,6 +957,7 @@ class project_config:
 		idx = 0
 		for node in default_node.findall("./*"):
 			if node.tag == 'MapPath' or \
+					node.tag == 'LabelRefRoot' or \
 					node.tag == 'UnmapPath':
 				if not inherit_default_mapping:
 					continue
@@ -994,6 +1016,10 @@ class project_config:
 	</MapPath>'''
 		else:
 			default_mappings = ''
+
+		default_mappings = '''
+	<LabelRefRoot>%s</LabelRefRoot>
+%s''' % (getattr(options, 'label_ref_root', 'refs/tags/'), default_mappings)
 
 		default_cfg = """<Default>
 	<Vars HardcodedDefault="Yes">%s
