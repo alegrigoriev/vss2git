@@ -25,6 +25,19 @@
 		</xs:complexType>
 	</xs:element>
 
+	<xs:element name="EditMsg">
+		<xs:complexType>
+			<xs:all>
+				<xs:element name="Match" type="xs:string" minOccurs="0"/>
+				<xs:element name="Replace" type="xs:string" />
+			</xs:all>
+			<xs:attribute name="Revs" type="xs:string" use="optional" />
+			<xs:attribute name="RevIds" type="xs:string" use="optional" />
+			<xs:attribute name="Max" type="xs:unsignedLong" use="optional" />
+			<xs:attribute name="Final" type="Boolean" use="optional" />
+		</xs:complexType>
+	</xs:element>
+
 	<xs:element name="MapPath">
 		<xs:complexType>
 			<xs:sequence>
@@ -32,6 +45,7 @@
 					<xs:element minOccurs="1" maxOccurs="1" name="Path" type="xs:string" />
 					<xs:element minOccurs="1" maxOccurs="1" name="Refname" type="xs:string" />
 					<xs:element minOccurs="0" maxOccurs="1" name="RevisionRef" type="xs:string" />
+					<xs:element ref="EditMsg" />
 					<xs:element name="LabelRefRoot" maxOccurs="1" type="xs:string" />
 				</xs:choice>
 			</xs:sequence>
@@ -74,6 +88,7 @@
 					</xs:complexType>
 				</xs:element>
 				<xs:element ref="MapRef" />
+				<xs:element ref="EditMsg" />
 				<xs:element name="LabelRefRoot" maxOccurs="1" type="xs:string" />
 			</xs:choice>
 		</xs:sequence>

@@ -34,6 +34,7 @@
     <Compile Include="vss-to-git.py" />
     <Compile Include="project_config.py" />
     <Compile Include="project_tree.py" />
+    <Compile Include="rev_ranges.py" />
     <Compile Include="vss_reader.py" />
   </ItemGroup>
   <ItemGroup>
