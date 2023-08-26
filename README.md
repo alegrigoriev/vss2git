@@ -553,6 +553,13 @@ If not present, or `"0"`, the pattern substitution will not be limited.
 Note that you can produce different commit messages for commits on same revision in different branches,
 by using different `<EditMsg>` specifications in separate `<MapPath>` blocks for those branches.
 
+Handling of empty commit messages
+---------------------------------
+
+Visual SourceSafe allows empty commit messages. An empty message may also be produced by [commit message editing](#Commit-message-editing).
+
+The program will generate a commit message describing all added, deleted, changed, renamed files.
+
 VSS history tracking
 ----------------
 
