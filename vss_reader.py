@@ -111,10 +111,11 @@ class vss_changeset_revision:
 		return
 
 class vss_database_reader:
-	def __init__(self, database_directory):
+	def __init__(self, database_directory, encoding='mbcs'):
 
 		from py_vss.VSS.vss_database import vss_database
-		self.database = vss_database(database_directory)
+		self.database = vss_database(database_directory, encoding)
+		self.encoding = encoding
 		return
 
 	def read_revisions(self, options):
