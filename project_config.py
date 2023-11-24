@@ -709,6 +709,7 @@ class path_map:
 		self.delete_if_merged = False
 		self.inject_files = []
 		self.ignore_files = path_list_match(match_dirs=True, match_files=True)
+		self.format_specifications = []
 
 		if block_upper_level:
 			# If the (expanded) path pattern has /* or /** specifications at the end,
@@ -782,6 +783,7 @@ class path_map:
 			delete_if_merged=self.delete_if_merged,
 			inject_files=self.inject_files,
 			ignore_files=self.ignore_files,
+			format_specifications=self.format_specifications,
 			labels_ref_root=labels_ref_root,
 			revisions_ref=revisions_ref)
 
@@ -1006,6 +1008,9 @@ class project_config:
 
 		for node in path_map_node.findall("./IgnoreFiles"):
 			new_map.ignore_files.append(node.text, vars_dict=self.replacement_vars)
+
+		for node in path_map_node.findall("./Formatting"):
+			new_map.format_specifications.append(self.process_formatting_node(node))
 
 		new_map.delete_if_merged = bool_property_value(path_map_node, 'DeleteIfMerged')
 

@@ -114,6 +114,7 @@
 					<xs:element ref="EditMsg" />
 					<xs:element ref="InjectFile" />
 					<xs:element name="IgnoreFiles" type="xs:string" />
+					<xs:element ref="Formatting" />
 					<xs:element name="LabelRefRoot" maxOccurs="1" type="xs:string" />
 				</xs:choice>
 			</xs:sequence>
