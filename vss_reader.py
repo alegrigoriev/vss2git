@@ -28,6 +28,10 @@ class vss_revision_node:
 		self.text_content = data
 		return
 
+	def clone(self):
+		return vss_revision_node(action=self.action, kind=self.kind, path=self.path, data=self.text_content,
+						copy_from=self.copyfrom_path, copy_from_rev=self.copyfrom_rev, label=self.label)
+
 	def print(self, fd):
 		print("   NODE %s %s:%s%s" % (self.action.decode(),
 					self.kind.decode() if self.kind is not None else None, self.path,

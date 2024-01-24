@@ -1720,6 +1720,7 @@ class project_history_tree(history_reader):
 		self.unmapped_authors = []
 		self.append_to_refs = {}
 		self.prune_refs = {}
+		self.edit_revision_list = []
 		# This is list of project configurations in order of their declaration
 		self.project_cfgs_list = project_config.project_config.make_config_list(options.config,
 											getattr(options, 'project_filter', []),
@@ -1773,6 +1774,20 @@ class project_history_tree(history_reader):
 					fmt.retab_only = True
 				elif options.skip_indent_format:
 					fmt.skip_indent_format = True
+
+			if cfg.edit_revision is not None:
+				import importlib
+				module = importlib.import_module(cfg.edit_revision.module, package=None)
+				if module is None:
+					raise Exception_cfg_parse("Module '%s' could not be imported"
+											% (cfg.edit_revision.module))
+				edit_revision_function = getattr(module, cfg.edit_revision.function, None)
+				if edit_revision_function is None:
+					raise Exception_cfg_parse("Function '%s' can't be imported from module %s"
+								% (cfg.edit_revision.function, cfg.edit_revision.module))
+
+				self.edit_revision_list.append(edit_revision_function)
+			continue
 
 		for extract_file in getattr(options, 'extract_file', []):
 			extract_file_split = extract_file[0].partition(',')
@@ -2293,6 +2308,9 @@ class project_history_tree(history_reader):
 
 		self.revision_has_nodes = False
 		self.revision_need_dump = self.log_dump_all
+
+		for edit_revision_function in self.edit_revision_list:
+			edit_revision_function(revision, self.log_file)
 
 		revision = super().apply_revision(revision)
 

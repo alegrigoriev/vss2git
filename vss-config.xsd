@@ -245,6 +245,13 @@
 									</xs:complexType>
 								</xs:element>
 								<xs:element ref="AddFile" />
+								<xs:element name="EditRevision">
+									<xs:complexType>
+										<xs:attribute name="Module" type="xs:string" use="required" />
+										<xs:attribute name="Function" type="xs:string" use="required" />
+									</xs:complexType>
+								</xs:element>
+
 							</xs:choice>
 						</xs:sequence>
 						<xs:attribute name="Name" type="xs:string" use="optional" />

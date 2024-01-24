@@ -828,6 +828,7 @@ class project_config:
 		self.explicit_only = False
 		self.needs_configs = ""
 		self.label_ref_root = None
+		self.edit_revision = None
 		if xml_node:
 			self.load(xml_node)
 		return
@@ -876,6 +877,8 @@ class project_config:
 				self.process_delete_file(node)
 			elif tag == 'Chmod':
 				self.add_chmod_node(node)
+			elif tag == 'EditRevision':
+				self.add_edit_revision_node(node)
 			elif tag == 'EmptyDirPlaceholder':
 				filename = node.get('Name')
 				if not filename:
@@ -1584,6 +1587,21 @@ class project_config:
 
 		return fmt
 
+	def add_edit_revision_node(self, node):
+		if self.edit_revision is not None:
+			raise Exception_cfg_parse('<EditRevision> specification can only appear once in <Project>')
+
+		module = node.get('Module', None)
+		if not module:
+			raise Exception_cfg_parse('Module="<module>" attribute missing in <EditRevision> specification')
+
+		function = node.get('Function', None)
+		if not function:
+			raise Exception_cfg_parse('Function="<function>" attribute missing in <EditRevision> specification')
+
+		self.edit_revision = SimpleNamespace(module=module, function=function)
+		return
+
 	## The function finds a map for a path
 	# @param path - path relative to the project root.
 	# If found, it returns a path_map object
@@ -1652,8 +1670,9 @@ class project_config:
 				continue
 
 			if node.tag == 'MergePath' or \
-				node.tag == 'CopyPath':
-				# Not carrying the default MergePath and CopyPath specifications over
+				node.tag == 'CopyPath' or \
+				node.tag == 'EditRevision':
+				# Not carrying the default MergePath, EditTree, EditRevision and CopyPath specifications over
 				continue
 
 			if not inherit_default:
