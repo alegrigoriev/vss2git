@@ -1299,7 +1299,7 @@ class project_history_tree(history_reader):
 
 		base_tree = super().apply_dir_node(node, base_tree)
 
-		if node.action == b'add':
+		if node.action == b'add' or (node.action == b'rename' and node.path != node.copyfrom_path):
 			node_branches_changed = []
 			root_path = node.path
 			if root_path:
@@ -1424,16 +1424,20 @@ class project_history_tree(history_reader):
 			return base_tree
 
 		# 'delete' action comes with no kind
-		if node.action == b'delete' or node.action == b'replace':
-			tree_node = self.branches.get_node(node.path, match_full_path=True)
-			if tree_node is not None:
-				# Recurse into all branches under this directory
-				for deleted_node in tree_node:
-					deleted_branch = deleted_node.object
-					if deleted_branch is not None:
-						deleted_branch.delete(self.HEAD())
+		if node.action == b'delete' or node.action == b'replace' or (node.action == b'rename' and node.path != node.copyfrom_path):
+			delete_tree_node = self.branches.get_node(node.copyfrom_path if node.action == b'rename' else node.path, match_full_path=True)
+		else:
+			delete_tree_node = None
 
 		base_tree = super().apply_node(node, base_tree)
+
+		# Needs to be done after super().apply_node call, because the deletion can be caused by rename
+		if delete_tree_node is not None:
+			# Recurse into all branches under this directory
+			for deleted_node in delete_tree_node:
+				deleted_branch = deleted_node.object
+				if deleted_branch is not None:
+					deleted_branch.delete(self.HEAD())
 
 		branch = self.find_branch(node.path)
 		if branch is None:

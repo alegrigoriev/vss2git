@@ -94,13 +94,11 @@ class vss_changeset_revision:
 		return
 
 	def rename_file(self, old_path:str, new_path:str):
-		self.add_revision_node(b'add', b'file', new_path, copy_from=old_path)
-		self.add_revision_node(b'delete', None, old_path)
+		self.add_revision_node(b'rename', b'file', new_path, copy_from=old_path)
 		return
 
 	def rename_directory(self, old_path:str, new_path:str):
-		self.add_revision_node(b'add', b'dir', new_path, copy_from=old_path)
-		self.add_revision_node(b'delete', None, old_path)
+		self.add_revision_node(b'rename', b'dir', new_path, copy_from=old_path)
 		return
 
 	def print(self, fd=sys.stdout):

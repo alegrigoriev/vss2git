@@ -546,7 +546,14 @@ class history_reader:
 	def apply_dir_node(self, node, base_tree):
 		subtree = base_tree.find_path(node.path)
 
-		if node.action == b'add':
+		if node.action == b'rename':
+			if node.path == node.copyfrom_path:
+				# no-op
+				return base_tree
+			# The directory must not currently exist
+			if subtree is not None:
+				raise Exception_history_parse('Directory rename operation for an already existing directory "%s"' % node.path)
+		elif node.action == b'add':
 			# The directory must not currently exist
 			if subtree is not None:
 				raise Exception_history_parse('Directory add operation for an already existing directory "%s"' % node.path)
@@ -574,13 +581,23 @@ class history_reader:
 
 				subtree = self.finalize_object(subtree)
 
+		if node.action == b'rename':
+			base_tree = base_tree.delete(node.copyfrom_path)
+
 		return base_tree.set(node.path, subtree)
 
 	def apply_file_node(self, node, base_tree):
 		file_blob = base_tree.find_path(node.path)
 		source_file = file_blob
 
-		if node.action != b'add':
+		if node.action == b'rename':
+			if node.path == node.copyfrom_path:
+				# no-op
+				return base_tree
+			# The directory must not currently exist
+			if file_blob is not None:
+				raise Exception_history_parse('File rename operation for an already existing file "%s"' % node.path)
+		elif node.action != b'add':
 			if file_blob is None:
 				raise Exception_history_parse('File %s operation for a non-existent file "%s"' % (node.action.decode(), node.path))
 
@@ -612,6 +629,9 @@ class history_reader:
 			file_blob = self.make_blob(text_content, node)
 		elif source_file:
 			file_blob = source_file
+
+		if node.action == b'rename':
+			base_tree = base_tree.delete(node.copyfrom_path)
 
 		return base_tree.set(node.path, self.finalize_object(file_blob))
 
