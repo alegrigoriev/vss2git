@@ -129,6 +129,12 @@ see [Mapping VSS usernames](#Mapping-VSS-usernames) section.
 - specifies filename to write a template JSON file for mapping VSS usernames to Git author/committer names and emails,
 see [Mapping VSS usernames](#Mapping-VSS-usernames) section.
 
+`--sha1-map <map filename.txt>`
+- speed up processing by reusing blob hashing from previous runs.
+The hash map file will be read (if exists) before the run, and written after the run completes.
+It maps an internal hash (composed from `.gitattributes` tree hash,
+file path and data hashes) into Git blob hash.
+
 `--prune-refs <refs filter>`
 Selects refs namespace to prune in the target Git repository.
 See [Pruning stale refs](#Pruning-stale-refs).
