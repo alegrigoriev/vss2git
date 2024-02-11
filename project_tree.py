@@ -113,6 +113,8 @@ class project_branch_rev(async_workitem):
 		# revisions_to_merge is a map of revisions pending to merge, keyed by (branch, index_seq).
 		self.revisions_to_merge = None
 		self.files_staged = 0
+		self.need_commit = False
+		self.skip_commit = None
 		# any_changes_present is set to true if stagelist was not empty
 		self.any_changes_present = False
 		self.staging_base_rev = None
@@ -143,13 +145,24 @@ class project_branch_rev(async_workitem):
 
 		self.rev = revision.rev
 		self.rev_id = revision.rev_id
+
+		for skip_commit in self.branch.skip_commit_list:
+			if skip_commit.revs and rev_in_ranges(skip_commit.revs, self.rev):
+				self.skip_commit = skip_commit
+				break
+			if skip_commit.rev_ids and self.rev_id in skip_commit.rev_ids:
+				self.skip_commit = skip_commit
+				break
+		else:
+			self.skip_commit = revision.skip_commit
+
 		self.add_revision_props(revision)
 
 		return self
 
 	### The function returns a single revision_props object, with:
 	# .log assigned a list of text paragraphs,
-	# .author, date, email, revision assigned from most recent revision_props
+	# .author, date, email, revision assigned from first revision_props
 	def get_combined_revision_props(self, base_rev=None, decorate_revision_id=False):
 		props_list = self.props_list
 		if not props_list:
@@ -157,13 +170,30 @@ class project_branch_rev(async_workitem):
 
 		prop0 = props_list[0]
 		msg = prop0.log.copy()
+
+		for prop in props_list[1:]:
+			# Drop repeating and empty paragraphs
+			for paragraph in prop.log:
+				if msg and not paragraph:
+					# drop empty paragraphs
+					continue
+				for prev_paragraph in msg:
+					if prev_paragraph.startswith(paragraph):
+						break
+				else:
+					# No similar paragraph already, can append
+					msg.append(paragraph)
+
+			continue
+
 		if not msg:
 			msg = self.make_change_description(base_rev)
 		elif msg and not msg[0]:
 			msg[0] = self.make_change_description(base_rev)[0]
 
 		if not msg or decorate_revision_id:
-			msg.append("VSS-revision: %s (%s)" % (prop.revision.rev, prop.revision.rev_id))
+			for prop in props_list:
+				msg.append("VSS-revision: %s (%s)" % (prop.revision.rev, prop.revision.rev_id))
 
 		return revision_props(prop0.revision, msg, prop0.author_info, prop0.date)
 
@@ -418,8 +448,11 @@ class project_branch_rev(async_workitem):
 
 				self.set_merged_revision(parent_rev)
 
+				if parent_rev.tree is self.tree and not self.parents:
+					self.any_changes_present = False
 				self.parents.append(parent_rev)
 				self.add_dependency(parent_rev)
+				parent_rev.mark_need_commit()
 				continue
 
 			self.revisions_to_merge = None
@@ -519,6 +552,16 @@ class project_branch_rev(async_workitem):
 
 		metrics = self.tree.get_difference_metrics(source)
 		return metrics.added + metrics.deleted < metrics.identical + metrics.different
+
+	def mark_need_commit(self):
+		if self.need_commit:
+			#already marked
+			return
+
+		self.need_commit = True
+		for rev_info in self.parents[1:]:
+			rev_info.mark_need_commit()
+		return
 
 	def add_label(self, label_ref):
 		if self.labels is None:
@@ -907,6 +950,7 @@ class project_branch(dependency_node):
 
 		self.ignore_files = branch_map.ignore_files
 		self.format_specifications = branch_map.format_specifications
+		self.skip_commit_list = branch_map.skip_commit_list + branch_map.cfg.skip_commit_list
 
 		# If need to preserve empty directories, this gets replaced with
 		# a tree which contains the placeholder file
@@ -1063,6 +1107,7 @@ class project_branch(dependency_node):
 			return
 		if self.label_root:
 			self.stage.add_label(self.label_root + label)
+			self.stage.need_commit = True
 		return
 
 	### The function makes a commit on this branch, using the properties from
@@ -1107,6 +1152,7 @@ class project_branch(dependency_node):
 
 		parent_commits = []
 		parent_git_tree = self.initial_git_tree
+		prev_git_tree = self.initial_git_tree
 		parent_tree = None
 		commit = None
 
@@ -1123,9 +1169,15 @@ class project_branch(dependency_node):
 							rev_info.branch.path, rev_info.rev), file=rev_info.log_file)
 					rev_info.parents.pop(0)
 
+		need_commit = rev_info.need_commit
+		skip_commit = rev_info.skip_commit
 		base_rev = None
 		for parent_rev in rev_info.parents:
 			if parent_rev.commit is None:
+				if not skip_commit \
+					and parent_rev.committed_git_tree == parent_rev.branch.initial_git_tree \
+					and rev_info.staged_git_tree != parent_rev.committed_git_tree:
+						need_commit = True
 				continue
 			if parent_rev.commit not in parent_commits:
 				parent_commits.append(parent_rev.commit)
@@ -1134,11 +1186,17 @@ class project_branch(dependency_node):
 
 		if base_rev is not None:
 			parent_git_tree = base_rev.committed_git_tree
+			prev_git_tree = base_rev.staged_git_tree
 			parent_tree = base_rev.committed_tree
 			commit = base_rev.commit
 
-		need_commit = rev_info.staged_git_tree != parent_git_tree
 		if len(parent_commits) > 1:
+			# Creating a merge commit: no skipping
+			need_commit = True
+		elif rev_info.staged_git_tree == parent_git_tree:
+			# No changes
+			need_commit = False
+		elif not skip_commit:
 			need_commit = True
 
 		if need_commit:
@@ -1164,6 +1222,20 @@ class project_branch(dependency_node):
 			self.proj_tree.commits_made += 1
 		else:
 			self.proj_tree.commits_to_make -= 1
+			if skip_commit:	# True or skip_commit object
+				if rev_info.staged_git_tree == prev_git_tree:
+					# If there are no changes in the tree for this revision, discard the current revision log
+					rev_info.props_list.pop(-1)
+				# The skipped commit message gets prepended to the next revision,
+				# Not making a commit yet, carry things over to the next
+				# Carry the revision properties over to the next commit
+				elif skip_commit is not True and skip_commit.message is not None:
+					rev_info.props_list[-1].log = log_to_paragraphs(skip_commit.message)
+				elif not rev_info.props_list[-1].log:
+					# If there's no message, discard the current revision props
+					rev_info.props_list.pop(-1)
+				rev_info.next_rev.props_list = rev_info.props_list + rev_info.next_rev.props_list
+
 			rev_info.committed_git_tree = parent_git_tree
 			rev_info.committed_tree = parent_tree
 
@@ -1333,6 +1405,7 @@ class project_branch(dependency_node):
 		print('Branch at path "%s" deleted at revision %s\n' %
 				(self.path, revision.rev), file=self.proj_tree.log_file)
 
+		self.HEAD.mark_need_commit()
 		self.add_dependency(self.HEAD)
 		self.HEAD.ready()
 		rev_info = self.stage
@@ -1379,6 +1452,7 @@ class project_branch(dependency_node):
 
 	def ready(self):
 		# This node will be executed when the last commit of the branch is done
+		self.HEAD.mark_need_commit()
 
 		self.add_dependency(self.HEAD)
 		self.HEAD.ready()
@@ -2104,8 +2178,23 @@ class project_history_tree(history_reader):
 		# Prepare commits
 		for branch in self.branches_changed:
 			branch.prepare_commit(revision)
+			# If two revisions are combined because of close timestamps,
+			# and the next revision doesn't produce a commit on some of
+			# this revision's branches, we'll keep a list of these
+			# branches to make sure to unmark these commits as skipped
+			if branch.HEAD.skip_commit is True \
+					and branch not in self.skipped_revision_branches:
+				self.skipped_revision_branches.append(branch)
 
 		self.executor.run(existing_only=True)
+
+		if not revision.skip_commit:
+			# This revision is not skipped, make sure to un-skip
+			# prevision skipped commits still hanging.
+			for branch in self.skipped_revision_branches:
+				if branch.HEAD.skip_commit is True:
+					branch.HEAD.skip_commit = None
+			self.skipped_revision_branches.clear()
 
 		self.branches_changed.clear()
 
@@ -2150,6 +2239,7 @@ class project_history_tree(history_reader):
 		git_repo = self.git_repo
 
 		self.branches_changed = []
+		self.skipped_revision_branches = []
 
 		# Check if we can create a branch for the root directory
 		branch_map = self.get_branch_map('/')

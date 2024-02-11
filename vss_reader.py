@@ -44,6 +44,7 @@ class vss_changeset_revision:
 		self.datetime = change.get_datetime()
 		self.timestamp = change.get_timestamp()
 		self.rev_id = str(self.timestamp)
+		self.skip_commit = False	# If True, this revision will not emit a commit. Its changes will be combined with the next revision
 		self.has_labels = False
 		self.has_changes = False
 		self.nodes = []
@@ -157,6 +158,9 @@ class vss_database_reader:
 							node.copyfrom_rev = revision.rev
 						revision.nodes.append(node)
 					continue
+				# Check if we want to combine these two revisions
+				elif next_revision.timestamp <= revision.timestamp + 60:
+					revision.skip_commit = True
 
 				yield revision
 

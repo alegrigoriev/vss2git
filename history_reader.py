@@ -500,6 +500,7 @@ def print_diff(diff_list, fd):
 class history_revision:
 	def __init__(self, dump_revision, prev_revision):
 		self.dump_revision = dump_revision
+		self.skip_commit = dump_revision.skip_commit
 		self.log = dump_revision.log
 		self.author = dump_revision.author
 		self.datetime = dump_revision.datetime
